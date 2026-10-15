@@ -1,0 +1,121 @@
+[
+  {
+    "id": "tab_demo",
+    "type": "tab",
+    "label": "IoT Demo",
+    "disabled": false,
+    "info": "Demo: Zufallswert -> MQTT -> InfluxDB -> Grafana"
+  },
+  {
+    "id": "mqtt_broker",
+    "type": "mqtt-broker",
+    "name": "Mosquitto",
+    "broker": "mosquitto",
+    "port": "1883",
+    "clientid": "nodered",
+    "autoConnect": true,
+    "usetls": false,
+    "protocolVersion": "4",
+    "keepalive": "60",
+    "cleansession": true
+  },
+  {
+    "id": "influx_cfg",
+    "type": "influxdb",
+    "hostname": "influxdb",
+    "port": "8086",
+    "protocol": "http",
+    "database": "",
+    "name": "InfluxDB",
+    "usetls": false,
+    "influxdbVersion": "2.0",
+    "url": "http://influxdb:8086",
+    "rejectUnauthorized": false
+  },
+  {
+    "id": "inject_sim",
+    "type": "inject",
+    "z": "tab_demo",
+    "name": "alle 10 s",
+    "props": [{ "p": "payload" }],
+    "repeat": "10",
+    "once": true,
+    "onceDelay": "3",
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 120, "y": 80,
+    "wires": [["fn_sim"]]
+  },
+  {
+    "id": "fn_sim",
+    "type": "function",
+    "z": "tab_demo",
+    "name": "Sensor simulieren",
+    "func": "msg.topic = 'sensors/demo/temperature';\nmsg.payload = Math.round((20 + Math.random() * 5) * 100) / 100;\nreturn msg;",
+    "outputs": 1,
+    "x": 310, "y": 80,
+    "wires": [["mqtt_out"]]
+  },
+  {
+    "id": "mqtt_out",
+    "type": "mqtt out",
+    "z": "tab_demo",
+    "name": "publish",
+    "topic": "",
+    "qos": "0",
+    "retain": "false",
+    "broker": "mqtt_broker",
+    "x": 500, "y": 80,
+    "wires": []
+  },
+  {
+    "id": "mqtt_in",
+    "type": "mqtt in",
+    "z": "tab_demo",
+    "name": "sensors/#",
+    "topic": "sensors/#",
+    "qos": "0",
+    "datatype": "auto-detect",
+    "broker": "mqtt_broker",
+    "inputs": 0,
+    "x": 120, "y": 180,
+    "wires": [["fn_influx", "debug_in"]]
+  },
+  {
+    "id": "fn_influx",
+    "type": "function",
+    "z": "tab_demo",
+    "name": "-> Influx Point",
+    "func": "// Topic sensors/<device>/<measurement>\nconst p = msg.topic.split('/');\nconst value = Number(msg.payload);\nif (isNaN(value)) return null;\nmsg.measurement = p[2] || 'value';\nmsg.payload = [{ value: value }, { device: p[1] || 'unknown', topic: msg.topic }];\nreturn msg;",
+    "outputs": 1,
+    "x": 320, "y": 180,
+    "wires": [["influx_out"]]
+  },
+  {
+    "id": "influx_out",
+    "type": "influxdb out",
+    "z": "tab_demo",
+    "influxdb": "influx_cfg",
+    "name": "InfluxDB schreiben",
+    "measurement": "",
+    "precision": "",
+    "retentionPolicy": "",
+    "database": "",
+    "retentionPolicyV18Flux": "",
+    "org": "${INFLUX_ORG}",
+    "bucket": "${INFLUX_BUCKET}",
+    "x": 540, "y": 180,
+    "wires": []
+  },
+  {
+    "id": "debug_in",
+    "type": "debug",
+    "z": "tab_demo",
+    "name": "MQTT empfangen",
+    "active": true,
+    "complete": "false",
+    "x": 330, "y": 240,
+    "wires": []
+  }
+]

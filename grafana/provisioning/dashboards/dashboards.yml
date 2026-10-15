@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+  - name: iot-stack
+    folder: IoT
+    type: file
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

@@ -1,0 +1,9 @@
+{
+  "mqtt_broker": {
+    "user": "${MQTT_USER}",
+    "password": "${MQTT_PASSWORD}"
+  },
+  "influx_cfg": {
+    "token": "${INFLUX_TOKEN}"
+  }
+}
